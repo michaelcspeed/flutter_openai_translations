@@ -1,6 +1,8 @@
 import openai
 import json
 import os
+import subprocess
+
 
 # Set up your OpenAI API key
 openai.api_key = YOUR_KEY_HERE
@@ -30,16 +32,26 @@ def load_json_file(filepath):
         print("Please check the syntax of the file around the indicated line and column.")
         exit(1)
 
+# Function to determine language code from file name
+def get_language_code(filename):
+    return filename.split('_')[1].split('.')[0]
+
+# Function to run Flutter gen-l10n command
+def run_flutter_gen_l10n():
+    try:
+        result = subprocess.run(['flutter', 'gen-l10n'], check=True, capture_output=True, text=True)
+        print("Flutter gen-l10n command executed successfully.")
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("Error executing Flutter gen-l10n command:")
+        print(e.stderr)
+
 # Load English ARB file
 en_arb = load_json_file('lib/l10n/app_en.arb')
 
 # Get list of ARB files in the l10n directory
 l10n_dir = 'lib/l10n'
 arb_files = [f for f in os.listdir(l10n_dir) if f.endswith('.arb') and f != 'app_en.arb']
-
-# Function to determine language code from file name
-def get_language_code(filename):
-    return filename.split('_')[1].split('.')[0]
 
 # Get the set of keys from the English ARB file
 en_keys = set(en_arb.keys())
@@ -86,3 +98,7 @@ for arb_file in arb_files:
         json.dump(arb_content, file, ensure_ascii=False, indent=2)
 
 print("\nTranslation update complete.")
+
+# Run Flutter gen-l10n command
+print("\nGenerating localization files...")
+run_flutter_gen_l10n()
